@@ -1,0 +1,20 @@
+The final project will require you to build a working Python system. You are to select a company (local business, corporation, or non-profit) and create a proposal for a system. You will set up a code environment and utilize tools such as GitHub for version control and code management.
+
+In this assignment, you will prepare and submit a proposal of your system. Your instructor will review the proposal and provide feedback. Your instructor must accept your proposal before you can begin work on your project. Your proposal is to contain the following:
+
+The client (company or non-profit) for whom you are creating the system.
+The scope of the system (what the system will do; make sure you are realistic and that you will be able to complete the project by the end of the course).
+The purpose of the system (what tasks will the system accomplish?).
+Submit your proposal for this assignment in Module 3 using the link Module 3 Final Project: Proposal.
+
+The minimum requirements of your system are:
+
+Your system must contain a graphical user-friendly interface that interacts with a minimum of three classes.
+Your system must utilize collections such as lists, tuples, arrays, and dictionaries.
+Your system must run with no syntax or runtime errors and produce the correct results.
+Documentation which includes the proposal, class diagram, and report of results with sample output.
+Project management requirements are:
+
+Commit code regularly to a GitHub repository.
+Make the repository accessible to the instructor.
+The completed project is to be submitted by the due date given in Module 8.
