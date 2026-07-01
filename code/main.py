@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import sqlite3
+import os
 
 @dataclass
 class Book:
@@ -44,6 +45,8 @@ class BookInstance:
             return False
 
 
+DB_NAME : str = "local_database.db"
+
 def initialize_tables(conn: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
     try:
         cursor.execute("""
@@ -85,13 +88,14 @@ def initialize_tables(conn: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
                     """)
         
         conn.commit()
-        print("Table initialized successfully.")
+        print("Tables initialized successfully.")
     except sqlite3.Error as e:
         conn.rollback()
         print(f"An error occurred: {e}")
     finally:
-        cursor.close()
-        conn.close()
+        # cursor.close()
+        # conn.close()
+        pass
 
 def add_user(conn: sqlite3.Connection, cursor: sqlite3.Cursor, user: User) -> None:
     try:
@@ -104,7 +108,7 @@ def add_user(conn: sqlite3.Connection, cursor: sqlite3.Cursor, user: User) -> No
                        state_address, 
                        zip_address, 
                        phone_number
-                       ) VALUES (?, ?)
+                       ) VALUES (?, ?, ?, ?, ?, ?, ?)
                        """, (
                            user.first_name,
                            user.last_name,
@@ -112,7 +116,7 @@ def add_user(conn: sqlite3.Connection, cursor: sqlite3.Cursor, user: User) -> No
                            user.city_address,
                            user.state_address,
                            user.zip_address,
-                           user.phone_number
+                           user.phone_number,
                        ))
         
         conn.commit()
@@ -121,45 +125,94 @@ def add_user(conn: sqlite3.Connection, cursor: sqlite3.Cursor, user: User) -> No
         conn.rollback()
         print(f"An error occurred: {e}")
     finally:
-        cursor.close()
-        conn.close()
+        # cursor.close()
+        # conn.close()
+        pass
 
-def clear_table(conn: sqlite3.Connection, cursor: sqlite3.Cursor, table: str) -> None:
+
+def add_book_with_genres(conn: sqlite3.Connection, cursor: sqlite3.Cursor, book: Book) -> None:
     try:
-        cursor.execute(f"DELETE FROM {table};")
+        cursor.execute(f"INSERT INTO books (title, author) VALUES (?, ?);", (book.title, book.author,))
+        book_id : int = cursor.lastrowid
+
+        for genre in book.genre:
+            # Insert genre if it doesn't already exist
+            cursor.execute("INSERT OR IGNORE INTO genres (name) VALUES (?)", (genre,))
+            
+            # Get the genre_id
+            cursor.execute("SELECT id FROM genres WHERE name = ?", (genre,))
+            genre_id = cursor.fetchone()[0]
+
+            # Link book and genre
+            cursor.execute("INSERT INTO book_genres (book_id, genre_id) VALUES (?, ?)", (book_id, genre_id))
+
         conn.commit()
-        cursor.execute("VACUUM;")
-        print("Table cleared successfully.")
+        print(f"Book {book.title} added successfully.")
     except sqlite3.Error as e:
         conn.rollback()
         print(f"An error occurred: {e}")
     finally:
-        cursor.close()
-        conn.close()
-    pass
+        # cursor.close()
+        # conn.close()
+        pass
+
+
+def clear_table(conn: sqlite3.Connection, cursor: sqlite3.Cursor, table_name: str) -> None:
+    if not table_name.isidentifier():
+        raise ValueError(f"Invalid or unsafe table name: {table_name}")
+    
+    try:
+        cursor.execute(f"DELETE FROM {table_name};")
+        conn.commit()
+        cursor.execute("VACUUM;")
+        print(f"Table {table_name} cleared successfully.")
+    except sqlite3.Error as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        # cursor.close()
+        # conn.close()
+        pass
+
 
 
 
 
 def main() -> None:
 
+    # HACK: For prototype testing only. Remove.
+    if os.path.exists(DB_NAME):
+        os.remove(DB_NAME)
+        print(f"Database {DB_NAME} successfully deleted.")
+    else:
+        print("The database file does not exist.")
+
+
     # NOTE: Since using a local db, keeping the connection open for the life of the app *should* be fine. 
     # Opening and closing the connection may be necessary to reduce risk of corruption or inadvertant events
     # on a server-based db
 
-    connection : sqlite3.Connection = sqlite3.connect("local_database.db")
+    connection : sqlite3.Connection = sqlite3.connect(DB_NAME)
     cursor : sqlite3.Cursor = connection.cursor()
 
-    cursor.execute("""
-                   CREATE TABLE IF NOT EXISTS users (
-                   id INTEGER PRIMARY KEY AUTOINCREMENT,
-                   name TEXT NOT NULL,
-                   age INTEGER
-                   )"""
-                   )
+    initialize_tables(connection, cursor)
+
+    user1 = User("John", "Doe", "123 New Rd", "Pleasantville", "IN", 12345, 5553332121)
+    user2 = User("Amy", "Allen", "444 Temple Rd", "Fort Wayne", "IN", 44444, 213465798)
+
+    add_user(connection, cursor, user1)
+    add_user(connection, cursor, user2)
+
+    # cursor.execute("""
+    #                CREATE TABLE IF NOT EXISTS users (
+    #                id INTEGER PRIMARY KEY AUTOINCREMENT,
+    #                name TEXT NOT NULL,
+    #                age INTEGER
+    #                )"""
+    #                )
     
-    cursor.execute("INSERT INTO users (name, age) VALUES (?, ?)", ("Alice", 30))
-    connection.commit()
+    # cursor.execute("INSERT INTO users (name, age) VALUES (?, ?)", ("Alice", 30))
+    # connection.commit()
 
     cursor.execute("SELECT * FROM users")
     all_rows = cursor.fetchall()
