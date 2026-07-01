@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import sqlite3
 
 @dataclass
 class Book:
@@ -41,3 +42,108 @@ class BookInstance:
             return True
         else:
             return False
+
+
+def initialize_table(conn: sqlite3.Connection, cursor: sqlite3.Cursor, table: str) -> None:
+    try:
+        cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    street_address TEXT NOT NULL,
+                    city_address TEXT NOT NULL,
+                    state_address TEXT NOT NULL,
+                    zip_address INTEGER NOT NULL,
+                    phone_number INTEGER
+                    )"""
+                    )
+        
+        conn.commit()
+        print("Table initialized successfully.")
+    except sqlite3.Error as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def add_user(conn: sqlite3.Connection, cursor: sqlite3.Cursor, table: str, first_name : str, last_name : str, street_address : str, city_address : str, state_address : str, zip_address : int, phone_number : int) -> None:
+    try:
+        cursor.execute("""
+                       INSERT INTO users (
+                       first_name, 
+                       last_name, 
+                       street_address, 
+                       city_address, 
+                       state_address, 
+                       zip_address, 
+                       phone_number
+                       ) VALUES (?, ?)
+                       """, (
+                           first_name,
+                           last_name,
+                           street_address,
+                           city_address,
+                           state_address,
+                           zip_address,
+                           phone_number
+                       ))
+        
+        conn.commit()
+        print("User added successfully.")
+    except sqlite3.Error as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def clear_table(conn: sqlite3.Connection, cursor: sqlite3.Cursor, table: str) -> None:
+    try:
+        cursor.execute(f"DELETE FROM {table};")
+        conn.commit()
+        cursor.execute("VACUUM;")
+        print("Table cleared successfully.")
+    except sqlite3.Error as e:
+        conn.rollback()
+        print(f"An error occurred: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+    pass
+
+
+
+
+def main() -> None:
+
+    # NOTE: Since using a local db, keeping the connection open for the life of the app *should* be fine. 
+    # Opening and closing the connection may be necessary to reduce risk of corruption or inadvertant events
+    # on a server-based db
+
+    connection : sqlite3.Connection = sqlite3.connect("local_database.db")
+    cursor : sqlite3.Cursor = connection.cursor()
+
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS users (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   name TEXT NOT NULL,
+                   age INTEGER
+                   )"""
+                   )
+    
+    cursor.execute("INSERT INTO users (name, age) VALUES (?, ?)", ("Alice", 30))
+    connection.commit()
+
+    cursor.execute("SELECT * FROM users")
+    all_rows = cursor.fetchall()
+
+    for row in all_rows:
+        print(f"ID: {row[0]}, Name: {row[1]}, Age: {row[2]}")
+    
+    connection.close()
+
+
+if __name__ == "__main__":
+    main()
