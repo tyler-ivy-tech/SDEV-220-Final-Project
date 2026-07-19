@@ -1,27 +1,17 @@
-import sys
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget
-)
-from PySide6.QtCore import Qt
+# Trying out Tkinter
+# Tutorial: https://www.youtube.com/watch?v=3GkavfUnOQE
 
+import tkinter
+from tkinter import ttk
+import tkinter.colorchooser
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("PySide6 Test")
+window = tkinter.Tk()
+window.title("Library Management System")
 
-        label = QLabel("PySide6 is working!")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+def change_color():
+    colors = tkinter.colorchooser.askcolor()
+    window.configure(bg=colors[1])
 
-        layout = QVBoxLayout()
-        layout.addWidget(label)
+ttk.Button(window, text="Pick Color", command=change_color).pack()
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-
-app = QApplication(sys.argv)
-window = MainWindow()
-window.show()
-app.exec()
+window.mainloop()
